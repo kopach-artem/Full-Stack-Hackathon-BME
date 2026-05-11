@@ -9,6 +9,10 @@
     "db:migrate": "pnpm --filter backend db:migrate",
     "db:studio": "pnpm --filter backend db:studio",
     "db:seed": "pnpm --filter backend db:seed",
+    "mobile": "pnpm --filter mobile start",
+    "mobile:android": "pnpm --filter mobile android",
+    "mobile:ios": "pnpm --filter mobile ios",
+    "mobile:typecheck": "pnpm --filter mobile typecheck",
     "test:e2e": "playwright test",
     "test:e2e:student": "playwright test tests/e2e/student-flow.spec.ts",
     "test:e2e:student:headed": "playwright test tests/e2e/student-flow.spec.ts --headed"

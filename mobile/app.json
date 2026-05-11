@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Education Portal",
+    "slug": "education-portal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bme.educationportal"
+    },
+    "android": {
+      "package": "com.bme.educationportal",
+      "adaptiveIcon": {
+        "backgroundColor": "#166534"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
