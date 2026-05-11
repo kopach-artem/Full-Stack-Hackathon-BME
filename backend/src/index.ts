@@ -10,9 +10,26 @@ import usersRouter from "./routes/users.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 4000;
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+const frontendOrigins = new Set(
+  (process.env.FRONTEND_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
-app.use(cors({ origin: frontendUrl }));
+// Expo web runs on port 8081 in local development.
+frontendOrigins.add("http://localhost:8081");
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || frontendOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+}));
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
