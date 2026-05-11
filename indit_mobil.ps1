@@ -1,6 +1,6 @@
 param(
   [ValidateSet("expo", "android", "ios", "web")]
-  [string]$Mod = "expo"
+  [string]$Mod = "web"
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,19 +16,38 @@ Ensure-BackendForMobile $pnpm
 
 switch ($Mod) {
   "android" {
-    Write-Step "Android emulátoros mobil kliens indítása"
-    Invoke-Pnpm $pnpm @("mobile:android")
+    Write-Step "Android emulátoros mobil kliens indítása új PowerShell ablakban"
+    $command = "Set-Location '$PSScriptRoot'; & '$pnpm' mobile:android"
+    Start-BackgroundPowerShell $command
   }
   "ios" {
-    Write-Step "iOS szimulátoros mobil kliens indítása"
-    Invoke-Pnpm $pnpm @("mobile:ios")
+    Write-Step "iOS szimulátoros mobil kliens indítása új PowerShell ablakban"
+    $command = "Set-Location '$PSScriptRoot'; & '$pnpm' mobile:ios"
+    Start-BackgroundPowerShell $command
   }
   "web" {
-    Write-Step "Mobil web kliens indítása Expo alatt"
-    Invoke-Pnpm $pnpm @("--filter", "mobile", "start", "--", "--web", "--clear")
+    try {
+      $null = Invoke-WebRequest "http://localhost:8081" -UseBasicParsing -TimeoutSec 2
+      Write-Step "Mobil web már fut, megnyitás Chrome-ban"
+      Open-UrlInChrome "http://localhost:8081"
+      return
+    } catch {
+      # Expo web még nem fut, indítás szükséges.
+    }
+
+    Write-Step "Mobil web kliens indítása Expo alatt új PowerShell ablakban"
+    $command = "Set-Location '$PSScriptRoot'; & '$pnpm' --filter mobile start -- --web --clear"
+    Start-BackgroundPowerShell $command
+
+    Write-Step "Mobil web elérhetőségének ellenőrzése"
+    Wait-ForUrl "http://localhost:8081" -MaxAttempts 45
+
+    Write-Step "Mobil web megnyitása Chrome-ban"
+    Open-UrlInChrome "http://localhost:8081"
   }
   default {
-    Write-Step "Expo mobil kliens indítása"
-    Invoke-Pnpm $pnpm @("mobile")
+    Write-Step "Expo mobil kliens indítása új PowerShell ablakban"
+    $command = "Set-Location '$PSScriptRoot'; & '$pnpm' mobile"
+    Start-BackgroundPowerShell $command
   }
 }

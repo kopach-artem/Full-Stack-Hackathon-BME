@@ -164,6 +164,8 @@ docker compose version
 
 ## Teljes indítás nulláról
 
+Az ajánlott futtatási mód Windows alatt a PowerShell indító scriptek használata. Ezek automatikusan ellenőrzik a környezetet, szükség esetén telepítik a `pnpm`-et, elindítják a PostgreSQL konténert, lefuttatják a migrációkat és betöltik a seed adatokat.
+
 ### 1. A repository klónozása
 
 ```bash
@@ -191,7 +193,7 @@ Mindegyik parancsnak telepített verziót kell visszaadnia.
 pnpm install
 ```
 
-Ha Windows alatt a `pnpm` Corepack signature hibával leáll, ugorj a lentebbi `Windows pnpm / Corepack hibaelhárítás` részhez, és használd az ott leírt kerülő megoldást.
+Ez a lépés opcionális, ha a lenti PowerShell indító scripteket használod, mert azok szükség esetén ezt is elvégzik.
 
 ### 4. Backend környezeti fájl létrehozása
 
@@ -233,7 +235,48 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-### 8. A webes frontend és a backend indítása
+### 8. Ajánlott indítás script segítségével
+
+#### Webes változat
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\indit_web.ps1
+```
+
+Ez a script:
+
+- ellenőrzi a `pnpm` elérhetőségét
+- szükség esetén telepíti a globális `pnpm`-et
+- létrehozza a `backend/.env` fájlt
+- elindítja vagy újrahasznosítja a PostgreSQL konténert
+- lefuttatja a migrációkat és a seed-et
+- elindítja a webes fejlesztői szervert egy új PowerShell ablakban
+- megnyitja a webes felületet Chrome-ban
+
+#### Mobil web változat
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1
+```
+
+Alapértelmezés szerint ez a script a mobil web változatot indítja el, és:
+
+- elvégzi az alap környezet-előkészítést
+- biztosítja, hogy a backend API elérhető legyen
+- elindítja az Expo mobil web szervert új PowerShell ablakban
+- megnyitja a mobil web nézetet Chrome-ban
+
+#### Egyéb mobil módok
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod android
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod ios
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod expo
+```
+
+### 9. Manuális indítás haladó felhasználóknak
+
+Ha nem scriptből szeretnéd indítani a projektet, a manuális parancsok továbbra is használhatók:
 
 ```bash
 pnpm dev
@@ -244,7 +287,7 @@ Ez elindítja:
 - a backendet a `http://localhost:4000` címen
 - a frontendet a `http://localhost:5173` címen
 
-### 9. A projekt megnyitása
+### 10. A projekt megnyitása
 
 Nyisd meg ezeket a címeket a böngészőben:
 
@@ -258,7 +301,7 @@ Windows alatt a projekt kényelmes indításához két külön script is rendelk
 ### Web indító script
 
 ```powershell
-.\indit_web.ps1
+powershell -ExecutionPolicy Bypass -File .\indit_web.ps1
 ```
 
 Ez a script automatikusan:
@@ -269,12 +312,13 @@ Ez a script automatikusan:
 - elindítja vagy újrahasznosítja a PostgreSQL konténert
 - lefuttatja a migrációkat
 - betölti a seed adatokat
-- elindítja a frontend + backend fejlesztői módot
+- elindítja a frontend + backend fejlesztői módot egy új PowerShell ablakban
+- megnyitja a webes felületet Chrome-ban
 
 ### Mobil indító script
 
 ```powershell
-.\indit_mobil.ps1
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1
 ```
 
 Ez a script automatikusan:
@@ -282,23 +326,24 @@ Ez a script automatikusan:
 - elvégzi az alap környezet-előkészítést
 - ellenőrzi, hogy a backend API elérhető-e
 - szükség esetén elindítja a backend szervert
-- elindítja az Expo mobil klienst
+- elindítja az Expo mobil klienst vagy a mobil web módot
+- mobil web mód esetén megnyitja az oldalt Chrome-ban
 
 Támogatott módok:
 
 ```powershell
-.\indit_mobil.ps1
-.\indit_mobil.ps1 -Mod android
-.\indit_mobil.ps1 -Mod ios
-.\indit_mobil.ps1 -Mod web
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod android
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod ios
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod web
 ```
 
 Jelentésük:
 
-- `expo`: normál Expo indítás
+- `web`: mobil web nézet Expo alatt, ez az alapértelmezett mód
 - `android`: Android emulátor
 - `ios`: iOS szimulátor
-- `web`: mobil web nézet Expo alatt
+- `expo`: normál Expo indítás
 
 ## Demó fiókok
 
@@ -393,24 +438,13 @@ Fontos: a projekt fő funkcionalitása és a legteljesebb adminisztrációs élm
 
 ### A mobil kliens indítása
 
-Először fusson a backend és az adatbázis. A mobil kliens önmagában nem elég, mert a bejelentkezéshez és az adatok lekéréséhez szüksége van a lokálisan futó API-ra.
+Az ajánlott indítás PowerShell script segítségével történik.
 
-```bash
-docker compose up -d
-pnpm dev
+```powershell
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1
 ```
 
-Ezután egy másik terminálban:
-
-```bash
-pnpm mobile
-```
-
-Ez az Expo fejlesztői szervert indítja el. Innen többféleképpen lehet továbblépni:
-
-- Android emulátor: `a`
-- mobil web: `w`
-- Expo Go fizikai eszközön: QR kód beolvasása
+Ez alapértelmezés szerint a mobil web módot indítja el, biztosítja a backend elérhetőségét, majd megnyitja a mobil nézetet Chrome-ban.
 
 ### Mobil futtatási módok
 
@@ -425,7 +459,7 @@ pnpm mobile:android
 PowerShell script használatával:
 
 ```powershell
-.\indit_mobil.ps1 -Mod android
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod android
 ```
 
 Az alap API URL ebben az esetben:
@@ -443,7 +477,7 @@ pnpm mobile:ios
 PowerShell script használatával:
 
 ```powershell
-.\indit_mobil.ps1 -Mod ios
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod ios
 ```
 
 Itt általában ez működik:
@@ -456,23 +490,11 @@ http://localhost:4000
 
 Ha böngészőben szeretnéd tesztelni a mobil klienst:
 
-```bash
-pnpm mobile
-```
-
-Majd az Expo terminálban nyomd meg:
-
-```text
-w
-```
-
-Mobil web esetén a backendnek futnia kell, és a kliens `http://localhost:4000` címen éri el az API-t.
-
-Közvetlen PowerShell script használatával:
-
 ```powershell
-.\indit_mobil.ps1 -Mod web
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1 -Mod web
 ```
+
+Mobil web esetén a script elindítja az Expo web szervert egy új PowerShell ablakban, és a Chrome böngészőben megnyitja a `http://localhost:8081` címet.
 
 #### 4. Fizikai telefon Expo Go-val
 
@@ -645,8 +667,8 @@ where.exe pnpm
 Ha nem szeretnéd minden parancsnál kézzel megadni ezt az útvonalat, használd inkább a PowerShell indító scripteket:
 
 ```powershell
-.\indit_web.ps1
-.\indit_mobil.ps1
+powershell -ExecutionPolicy Bypass -File .\indit_web.ps1
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1
 ```
 
 ## Környezeti fájlok
@@ -672,18 +694,15 @@ EXPO_PUBLIC_API_URL=http://10.0.2.2:4000
 
 ## Mit kell futtatnia a zsűrinek
 
-Friss klónozás után a legrövidebb út:
+Friss klónozás után az ajánlott legegyszerűbb út Windows alatt:
 
-```bash
-pnpm install
-docker compose up -d
-cp backend/.env.example backend/.env
-pnpm db:migrate
-pnpm db:seed
-pnpm dev
+```powershell
+powershell -ExecutionPolicy Bypass -File .\indit_web.ps1
 ```
 
-Ezután megnyitandó:
+Ez elindítja a szükséges szolgáltatásokat, és megnyitja a webes felületet Chrome-ban.
+
+Ezután megnyitandó vagy már automatikusan megnyitott cím:
 
 - `http://localhost:5173`
 
@@ -691,20 +710,8 @@ Ez a fő webes változat, és ez tartalmazza a legteljesebb adminisztrációs fu
 
 Ha a mobil klienst is szeretnék kipróbálni:
 
-```bash
-pnpm mobile
-```
-
-Majd az Expo felületén:
-
-- `a` Android emulátorhoz
-- `w` mobil web nézethez
-
-Windows alatt egyszerűbb alternatíva:
-
 ```powershell
-.\indit_web.ps1
-.\indit_mobil.ps1 -Mod web
+powershell -ExecutionPolicy Bypass -File .\indit_mobil.ps1
 ```
 
 ## A projekt jelenlegi fókusza

@@ -15,12 +15,22 @@ function Get-PnpmCommand {
     return $pnpmFromNpm
   }
 
-  $pnpmCommand = Get-Command pnpm -ErrorAction SilentlyContinue
-  if ($pnpmCommand) {
-    return $pnpmCommand.Source
+  $npmCommand = Get-Command npm -ErrorAction SilentlyContinue
+  if (-not $npmCommand) {
+    throw "Sem a pnpm, sem az npm nem található. Telepítsd a Node.js-t npm támogatással."
   }
 
-  throw "pnpm nem található. Telepítsd a pnpm-et, vagy Windows alatt futtasd: npm install -g pnpm"
+  Write-Step "Globális pnpm telepítése npm segítségével"
+  & $npmCommand.Source install -g pnpm
+  if ($LASTEXITCODE -ne 0) {
+    throw "A pnpm automatikus telepítése nem sikerült."
+  }
+
+  if (Test-Path $pnpmFromNpm) {
+    return $pnpmFromNpm
+  }
+
+  throw "A pnpm telepítése után sem található a várt elérési úton: $pnpmFromNpm"
 }
 
 function Invoke-Pnpm {
@@ -150,4 +160,68 @@ function Ensure-BaseSetup {
   Ensure-Dependencies $Pnpm
   Ensure-PostgresRunning
   Ensure-DatabaseReady $Pnpm
+}
+
+function Wait-ForUrl {
+  param(
+    [string]$Url,
+    [int]$MaxAttempts = 30,
+    [int]$DelaySeconds = 2
+  )
+
+  for ($i = 0; $i -lt $MaxAttempts; $i++) {
+    try {
+      $null = Invoke-WebRequest $Url -UseBasicParsing -TimeoutSec 2
+      return
+    } catch {
+      Start-Sleep -Seconds $DelaySeconds
+    }
+  }
+
+  throw "A várt URL nem vált elérhetővé időben: $Url"
+}
+
+function Get-ChromeExecutable {
+  $candidates = @(
+    "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+    "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+    "$env:LocalAppData\Google\Chrome\Application\chrome.exe"
+  ) | Where-Object { $_ -and (Test-Path $_) }
+
+  if ($candidates.Count -gt 0) {
+    return $candidates[0]
+  }
+
+  $chromeCommand = Get-Command chrome.exe -ErrorAction SilentlyContinue
+  if ($chromeCommand) {
+    return $chromeCommand.Source
+  }
+
+  return $null
+}
+
+function Open-UrlInChrome {
+  param([string]$Url)
+
+  $chrome = Get-ChromeExecutable
+  if ($chrome) {
+    Start-Process -FilePath $chrome -ArgumentList $Url | Out-Null
+    return
+  }
+
+  Start-Process $Url | Out-Null
+}
+
+function Start-BackgroundPowerShell {
+  param([string]$Command)
+
+  Start-Process powershell -ArgumentList @(
+    "-NoLogo",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-NoExit",
+    "-Command",
+    $Command
+  ) | Out-Null
 }
