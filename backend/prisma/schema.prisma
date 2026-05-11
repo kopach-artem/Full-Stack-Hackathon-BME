@@ -8,6 +8,7 @@ datasource db {
 }
 
 enum RoleName {
+  SUPERADMIN
   ADMIN
   TEACHER
   STUDENT
@@ -22,10 +23,11 @@ model Role {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String
-  roleId      String
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  roleId       String
   role        Role         @relation(fields: [roleId], references: [id])
   teaching    Course[]     @relation("CourseTeacher")
   enrollments Enrollment[]
