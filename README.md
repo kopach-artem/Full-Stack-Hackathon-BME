@@ -1,56 +1,58 @@
-# BME Education Portal
+# BME Oktatási Portál
 
-Fullstack secondary-school education management portal for the BME fullstack and mobile programming competition.
+Teljes veremű középiskolai oktatásszervezési portál a BME fullstack és mobil fejlesztői versenyére.
 
-The project is locally runnable, role-based, seeded with demo data, and includes:
+A projekt lokálisan futtatható, szerepkör-alapú, demó adatokkal előkészített, és az alábbi részeket tartalmazza:
 
-- web client
+- webes kliens
 - backend API
-- PostgreSQL via Docker Compose
+- PostgreSQL Docker Compose használatával
 - Prisma ORM
-- Expo mobile client
-- Playwright end-to-end tests
+- Expo mobil kliens
+- Playwright végponttól végpontig tesztek
+- külön magyar tesztelési útmutató
+- automata PowerShell tesztfuttató script
 
-## Main Features
+## Fő funkciók
 
-- JWT authentication with role-based access control
-- Four roles:
+- JWT alapú hitelesítés és szerepkör-alapú jogosultságkezelés
+- Négy szerepkör:
   - `SUPERADMIN`
   - `ADMIN`
   - `TEACHER`
   - `STUDENT`
-- School structure management:
-  - classes
-  - subjects
-  - users
-  - subject assignments
-- Teacher workflow:
-  - see own assigned subjects
-  - enter grades for students in assigned classes
-  - use weighted grades
-- Student workflow:
-  - see own class
-  - see own subjects
-  - see own grades only
-  - see weighted average for regular grades
-  - see special grade types separately
-- Superadmin workflow:
-  - manage admin and superadmin accounts
-- Mobile client with student and teacher flows
-- End-to-end browser tests with Playwright
+- Iskolai struktúra kezelése:
+  - osztályok
+  - tantárgyak
+  - felhasználók
+  - tantárgy-hozzárendelések
+- Oktatói folyamat:
+  - saját hozzárendelt tantárgyak megtekintése
+  - jegyek rögzítése a saját osztályok diákjai számára
+  - súlyozott jegyek használata
+- Diák folyamat:
+  - saját osztály megtekintése
+  - saját tantárgyak megtekintése
+  - csak a saját jegyek megtekintése
+  - súlyozott átlag megjelenítése a normál jegyekből
+  - speciális jegytípusok külön megjelenítése
+- Szuperadmin folyamat:
+  - admin és szuperadmin fiókok kezelése
+- Mobil kliens diák és oktató felületekkel
+- Playwright alapú böngészős E2E tesztek
 
-## Tech Stack
+## Technológiai stack
 
 - Frontend: React + Vite + TypeScript
 - Backend: Node.js + Express + TypeScript
-- Database: PostgreSQL
+- Adatbázis: PostgreSQL
 - ORM: Prisma
-- Mobile: Expo + React Native
-- Package manager: pnpm
-- Validation/Auth: Zod, JWT, bcrypt
-- Testing: Playwright
+- Mobil: Expo + React Native
+- Csomagkezelő: pnpm
+- Validáció / auth: Zod, JWT, bcrypt
+- Tesztelés: Playwright
 
-## Repository Structure
+## Projektstruktúra
 
 ```text
 backend/
@@ -76,47 +78,49 @@ mobile/
 tests/
   e2e/
 docker-compose.yml
+futtat_automata_tesztek.ps1
 package.json
 pnpm-workspace.yaml
 README.md
+TESZTELESI_UTMUTATO.md
 ```
 
-## Implemented Web Pages
+## Megvalósított webes oldalak
 
-### Shared
+### Közös
 
-- Login page
-- Protected routes
-- Role-based navigation
+- Bejelentkezési oldal
+- Védett route-ok
+- Szerepkör-alapú navigáció
 
 ### Admin
 
 - Dashboard
-- User management
-- Class management
-- Subject management
-- Subject assignment management
+- Felhasználókezelés
+- Osztálykezelés
+- Tantárgykezelés
+- Tantárgy-hozzárendelések kezelése
 
-### Teacher
-
-- Dashboard
-- My subjects
-- Grade entry
-
-### Student
+### Oktató
 
 - Dashboard
-- My subjects
-- My grades
+- Saját tantárgyak
+- Jegyrögzítés
 
-### Superadmin
+### Diák
 
 - Dashboard
-- Admin and superadmin management
+- Saját tantárgyak
+- Saját jegyek
 
-## Domain Model
+### Szuperadmin
 
-The current Prisma schema is built around a school portal:
+- Dashboard
+- Admin és szuperadmin kezelés
+
+## Domain modell
+
+A jelenlegi Prisma séma egy iskolai portál köré épül:
 
 - `Role`
 - `User`
@@ -125,23 +129,23 @@ The current Prisma schema is built around a school portal:
 - `SubjectAssignment`
 - `Grade`
 
-Core business rule:
+Alap üzleti szabályok:
 
-- a student belongs to one class
-- a subject is assigned to a class and teacher for an academic year
-- a teacher can grade only students inside their own assignments
-- a student can see only their own data
+- egy diák pontosan egy osztályhoz tartozik
+- egy tantárgy adott tanévben osztályhoz és oktatóhoz van rendelve
+- egy oktató csak a saját hozzárendelt tantárgyain belül adhat jegyet
+- egy diák csak a saját adatait láthatja
 
-## Prerequisites
+## Előfeltételek
 
-Install these before starting:
+A futtatás előtt ezek legyenek telepítve:
 
 1. Git
-2. Node.js 20+ or 22+
+2. Node.js 20+ vagy 22+
 3. pnpm
 4. Docker Desktop
 
-Recommended checks:
+Javasolt ellenőrző parancsok:
 
 ```bash
 git --version
@@ -151,18 +155,18 @@ docker --version
 docker compose version
 ```
 
-## Full Setup From Zero
+## Teljes indítás nulláról
 
-### 1. Clone the repository
+### 1. A repository klónozása
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/kopach-artem/Full-Stack-Hackathon-BME.git
 cd Full-Stack-Hackathon-BME
 ```
 
-### 2. Check the required tools
+### 2. A szükséges eszközök ellenőrzése
 
-Run:
+Futtasd ezeket:
 
 ```bash
 git --version
@@ -172,75 +176,77 @@ docker --version
 docker compose version
 ```
 
-You should see installed versions for all of them.
+Mindegyik parancsnak telepített verziót kell visszaadnia.
 
-### 3. Install dependencies
+### 3. Függőségek telepítése
 
 ```bash
 pnpm install
 ```
 
-### 4. Create the backend environment file
+Ha Windows alatt a `pnpm` Corepack signature hibával leáll, ugorj a lentebbi `Windows pnpm / Corepack hibaelhárítás` részhez, és használd az ott leírt kerülő megoldást.
 
-On macOS/Linux:
+### 4. Backend környezeti fájl létrehozása
+
+macOS/Linux:
 
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
 ```
 
-### 5. Start PostgreSQL with Docker Compose
+### 5. PostgreSQL indítása Docker Compose segítségével
 
 ```bash
 docker compose up -d
 ```
 
-Optional check:
+Opcionális ellenőrzés:
 
 ```bash
 docker compose ps
 ```
 
-The PostgreSQL container should be running and healthy.
+A PostgreSQL konténernek futnia kell, és egészséges állapotban kell lennie.
 
-### 6. Run Prisma migration
+### 6. Prisma migráció futtatása
 
 ```bash
 pnpm db:migrate
 ```
 
-### 7. Seed demo data
+### 7. Demó adatok betöltése
 
 ```bash
 pnpm db:seed
 ```
 
-### 8. Start the web app and backend
+### 8. A webes frontend és a backend indítása
 
 ```bash
 pnpm dev
 ```
 
-This starts:
+Ez elindítja:
 
-- backend on `http://localhost:4000`
-- frontend on `http://localhost:5173`
+- a backendet a `http://localhost:4000` címen
+- a frontendet a `http://localhost:5173` címen
 
-### 9. Open the project
+### 9. A projekt megnyitása
 
-Open these URLs in the browser:
+Nyisd meg ezeket a címeket a böngészőben:
 
 - Frontend: `http://localhost:5173`
 - Backend health check: `http://localhost:4000/api/health`
 
-## Demo Accounts
+## Demó fiókok
 
-These accounts are created by `pnpm db:seed`.
+Ezeket a fiókokat a `pnpm db:seed` hozza létre.
 
 ```text
 superadmin@school.edu / superadmin123
@@ -252,93 +258,93 @@ kiss.eva@school.edu / student123
 molnar.adam@school.edu / student123
 ```
 
-## Fast Demo Flow
+## Gyors demó forgatókönyv
 
 ### Admin
 
-Login:
+Bejelentkezés:
 
 ```text
 admin@school.edu / admin123
 ```
 
-Show:
+Mutasd meg:
 
-- users
-- classes
-- subjects
-- subject assignments
+- felhasználók
+- osztályok
+- tantárgyak
+- tantárgy-hozzárendelések
 
-### Teacher
+### Oktató
 
-Login:
+Bejelentkezés:
 
 ```text
 kovacs.peter@school.edu / teacher123
 ```
 
-Show:
+Mutasd meg:
 
-- assigned subjects
-- student list
-- grade entry
-- weighted grading flow
+- hozzárendelt tantárgyak
+- diáklista
+- jegyrögzítés
+- súlyozott értékelési folyamat
 
-### Student
+### Diák
 
-Login:
+Bejelentkezés:
 
 ```text
 toth.bela@school.edu / student123
 ```
 
-Show:
+Mutasd meg:
 
-- own class
-- own subjects
-- own grades
-- regular weighted average
+- saját osztály
+- saját tantárgyak
+- saját jegyek
+- normál jegyekből számolt súlyozott átlag
 
-### Superadmin
+### Szuperadmin
 
-Login:
+Bejelentkezés:
 
 ```text
 superadmin@school.edu / superadmin123
 ```
 
-Show:
+Mutasd meg:
 
-- admin management
-- superadmin management
+- admin kezelés
+- szuperadmin kezelés
 
-## Mobile Client
+## Mobil kliens
 
-The repository includes a separate Expo mobile client in `mobile/`.
+A repository tartalmaz egy külön Expo mobil klienst a `mobile/` mappában.
 
-Current mobile coverage:
+A jelenlegi mobil funkcionalitás:
 
-- login
-- student dashboard, subjects, grades
-- teacher subjects and grade entry
-- admin/superadmin fallback screen directing management work to the web portal
+- bejelentkezés
+- diák dashboard, tantárgyak, jegyek
+- oktatói tantárgylista és jegyrögzítés
+- admin/szuperadmin esetén egy tájékoztató képernyő, amely a webes felület használatát javasolja az adminisztrációhoz
 
-### Start the mobile client
+### A mobil kliens indítása
 
-Keep the backend and database running first:
+Először fusson a backend és az adatbázis:
 
 ```bash
 docker compose up -d
 pnpm dev
 ```
 
-Then in another terminal:
+Ezután egy másik terminálban:
 
 ```bash
 pnpm mobile
 ```
 
-Useful mobile commands:
+Hasznos mobil parancsok:
 
 ```bash
 pnpm mobile
@@ -347,51 +353,97 @@ pnpm mobile:ios
 pnpm mobile:typecheck
 ```
 
-### Mobile API URL
+### Mobil API URL
 
-Default mobile API URL:
+Alapértelmezett mobil API URL:
 
 ```text
 http://10.0.2.2:4000
 ```
 
-This is correct for the Android emulator.
+Ez az Android emulátorhoz megfelelő.
 
-For a physical device, create `mobile/.env` from `mobile/.env.example` and set:
+iOS szimulátor esetén általában a `http://localhost:4000` működik.
+
+Fizikai eszköz esetén hozd létre a `mobile/.env` fájlt a `mobile/.env.example` alapján, és állítsd be ezt:
 
 ```text
-EXPO_PUBLIC_API_URL=http://<YOUR_LOCAL_IP>:4000
+EXPO_PUBLIC_API_URL=http://<SAJAT_HELYI_IP>:4000
 ```
 
-Example:
+Példa:
 
 ```text
 EXPO_PUBLIC_API_URL=http://192.168.1.20:4000
 ```
 
-## End-to-End Tests
+## Végponttól végpontig tesztek
 
-Playwright tests are included in `tests/e2e/`.
+A Playwright tesztek a `tests/e2e/` mappában találhatók.
 
-Run all tests:
+Összes teszt futtatása:
 
 ```bash
 pnpm test:e2e
 ```
 
-Run only the student flow:
+Csak a diák flow futtatása:
 
 ```bash
 pnpm test:e2e:student
 ```
 
-Run the student flow with a visible browser:
+A diák flow futtatása látható böngészőablakkal:
 
 ```bash
 pnpm test:e2e:student:headed
 ```
 
-## Useful Commands
+## Kézi és automata tesztelési fájlok
+
+A repository két külön fájlt is tartalmaz a tesztelés megkönnyítésére:
+
+### 1. Kézi tesztelési útmutató
+
+```text
+TESZTELESI_UTMUTATO.md
+```
+
+Ez a fájl tartalmazza:
+
+- a demó felhasználókat
+- a bejelentkezési adatokat
+- a szerepkörönkénti tesztelési lépéseket
+- a jogosultsági ellenőrzéseket
+- a bemutatási sorrendre vonatkozó javaslatot
+
+### 2. Automata tesztfuttató script
+
+```text
+futtat_automata_tesztek.ps1
+```
+
+Ez a PowerShell script:
+
+- ellenőrzi a `backend/.env` fájlt
+- elindítja a PostgreSQL adatbázist
+- lefuttatja a migrációkat
+- betölti a seed adatokat
+- elindítja a Playwright E2E teszteket
+
+Futtatás Windows PowerShell alatt:
+
+```powershell
+.\futtat_automata_tesztek.ps1
+```
+
+Ha a PowerShell futtatási szabályzata blokkolja:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\futtat_automata_tesztek.ps1
+```
+
+## Hasznos parancsok
 
 ```bash
 pnpm dev
@@ -409,9 +461,9 @@ docker compose up -d
 docker compose down
 ```
 
-## Clean Reset
+## Tiszta újraindítás
 
-If the database gets into a bad state and you are okay with deleting local PostgreSQL data:
+Ha az adatbázis rossz állapotba került, és nem gond a lokális PostgreSQL adatok törlése:
 
 ```bash
 docker compose down -v
@@ -421,25 +473,25 @@ pnpm db:seed
 pnpm dev
 ```
 
-## Build Check
+## Build ellenőrzés
 
-To verify both backend and frontend production builds:
+A backend és a frontend production build ellenőrzéséhez:
 
 ```bash
 pnpm build
 ```
 
-## Windows pnpm / Corepack Troubleshooting
+## Windows pnpm / Corepack hibaelhárítás
 
-If `pnpm` fails on Windows with a Corepack signature error, use this fallback:
+Ha a `pnpm` Windows alatt Corepack signature hibával leáll, használd ezt a kerülő megoldást:
 
-1. Install pnpm globally:
+1. Telepítsd globálisan a pnpm-et:
 
 ```powershell
 npm install -g pnpm
 ```
 
-2. Use the npm-installed pnpm directly:
+2. Használd közvetlenül az npm által telepített pnpm-et:
 
 ```powershell
 & "$env:APPDATA\npm\pnpm.cmd" install
@@ -448,13 +500,13 @@ npm install -g pnpm
 & "$env:APPDATA\npm\pnpm.cmd" dev
 ```
 
-If needed, you can also verify the path:
+Szükség esetén ellenőrizheted az elérési utat is:
 
 ```powershell
 where.exe pnpm
 ```
 
-## Environment Files
+## Környezeti fájlok
 
 ### Backend
 
@@ -467,7 +519,7 @@ FRONTEND_URL="http://localhost:5173"
 JWT_SECRET="change-me-in-production"
 ```
 
-### Mobile
+### Mobil
 
 `mobile/.env`
 
@@ -475,9 +527,9 @@ JWT_SECRET="change-me-in-production"
 EXPO_PUBLIC_API_URL=http://10.0.2.2:4000
 ```
 
-## What Judges Need To Run
+## Mit kell futtatnia a zsűrinek
 
-From a fresh clone, the shortest path is:
+Friss klónozás után a legrövidebb út:
 
 ```bash
 pnpm install
@@ -488,25 +540,25 @@ pnpm db:seed
 pnpm dev
 ```
 
-Then open:
+Ezután megnyitandó:
 
 - `http://localhost:5173`
 
-If testing mobile too:
+Ha a mobil klienst is szeretnék kipróbálni:
 
 ```bash
 pnpm mobile
 ```
 
-## Known Scope
+## A projekt jelenlegi fókusza
 
-This is a competition MVP focused on:
+Ez egy versenyre szánt MVP, amely elsősorban az alábbiakra koncentrál:
 
-- working local setup
-- clear role-based architecture
-- admin, teacher, student, and superadmin flows
-- demo-ready seeded data
-- responsive web app
-- mobile bonus client
+- megbízható lokális futtatás
+- tiszta szerepkör-alapú architektúra
+- admin, oktató, diák és szuperadmin folyamatok
+- demóra előkészített seed adatok
+- reszponzív webes felület
+- mobil bónusz kliens
 
-It is intentionally compact and designed to be extended further during the competition.
+Szándékosan kompakt, és úgy lett kialakítva, hogy a verseny során könnyen továbbfejleszthető legyen.
