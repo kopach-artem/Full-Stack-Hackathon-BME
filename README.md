@@ -2,6 +2,8 @@
 
 Teljes veremű középiskolai oktatásszervezési portál a BME fullstack és mobil fejlesztői versenyére.
 
+A megoldás fejlesztése során a fő hangsúly elsősorban a backend architektúrán, az adatmodellen, a jogosultságkezelésen és a stabil végpontokon volt. A webes és mobil felületek ehhez a backend központú alaphoz készültek demonstrációs és használati célra.
+
 A projekt lokálisan futtatható, szerepkör-alapú, demó adatokkal előkészített, és az alábbi részeket tartalmazza:
 
 - webes kliens
@@ -12,6 +14,8 @@ A projekt lokálisan futtatható, szerepkör-alapú, demó adatokkal előkészí
 - Playwright végponttól végpontig tesztek
 - külön magyar tesztelési útmutató
 - automata PowerShell tesztfuttató script
+- külön PowerShell indító script a webes futtatáshoz
+- külön PowerShell indító script a mobil futtatáshoz
 
 ## Fő funkciók
 
@@ -38,7 +42,7 @@ A projekt lokálisan futtatható, szerepkör-alapú, demó adatokkal előkészí
   - speciális jegytípusok külön megjelenítése
 - Szuperadmin folyamat:
   - admin és szuperadmin fiókok kezelése
-- Mobil kliens diák és oktató felületekkel
+- Mobil kliens diák és oktató felületekkel, külön webes adminisztrációs fókusz mellett
 - Playwright alapú böngészős E2E tesztek
 
 ## Technológiai stack
@@ -79,6 +83,9 @@ tests/
   e2e/
 docker-compose.yml
 futtat_automata_tesztek.ps1
+indit_mobil.ps1
+indit_web.ps1
+inditasi_segedlet.ps1
 package.json
 pnpm-workspace.yaml
 README.md
@@ -244,6 +251,55 @@ Nyisd meg ezeket a címeket a böngészőben:
 - Frontend: `http://localhost:5173`
 - Backend health check: `http://localhost:4000/api/health`
 
+## Gyors PowerShell indító scriptek
+
+Windows alatt a projekt kényelmes indításához két külön script is rendelkezésre áll.
+
+### Web indító script
+
+```powershell
+.\indit_web.ps1
+```
+
+Ez a script automatikusan:
+
+- ellenőrzi a `backend/.env` fájlt
+- ellenőrzi a `pnpm` elérhetőségét
+- szükség esetén telepíti a projekt függőségeit
+- elindítja vagy újrahasznosítja a PostgreSQL konténert
+- lefuttatja a migrációkat
+- betölti a seed adatokat
+- elindítja a frontend + backend fejlesztői módot
+
+### Mobil indító script
+
+```powershell
+.\indit_mobil.ps1
+```
+
+Ez a script automatikusan:
+
+- elvégzi az alap környezet-előkészítést
+- ellenőrzi, hogy a backend API elérhető-e
+- szükség esetén elindítja a backend szervert
+- elindítja az Expo mobil klienst
+
+Támogatott módok:
+
+```powershell
+.\indit_mobil.ps1
+.\indit_mobil.ps1 -Mod android
+.\indit_mobil.ps1 -Mod ios
+.\indit_mobil.ps1 -Mod web
+```
+
+Jelentésük:
+
+- `expo`: normál Expo indítás
+- `android`: Android emulátor
+- `ios`: iOS szimulátor
+- `web`: mobil web nézet Expo alatt
+
 ## Demó fiókok
 
 Ezeket a fiókokat a `pnpm db:seed` hozza létre.
@@ -325,13 +381,19 @@ A repository tartalmaz egy külön Expo mobil klienst a `mobile/` mappában.
 A jelenlegi mobil funkcionalitás:
 
 - bejelentkezés
-- diák dashboard, tantárgyak, jegyek
-- oktatói tantárgylista és jegyrögzítés
+- diák dashboard
+- diák tantárgylista
+- diák jegyek és átlagok
+- oktatói tantárgylista
+- oktatói jegyrögzítés
+- mobil web futtatás Expo segítségével
 - admin/szuperadmin esetén egy tájékoztató képernyő, amely a webes felület használatát javasolja az adminisztrációhoz
+
+Fontos: a projekt fő funkcionalitása és a legteljesebb adminisztrációs élmény a backend + webes felület köré készült. A mobil kliens elsősorban demonstrációs és bónusz funkcionalitás, főként diák és oktató nézetekhez.
 
 ### A mobil kliens indítása
 
-Először fusson a backend és az adatbázis:
+Először fusson a backend és az adatbázis. A mobil kliens önmagában nem elég, mert a bejelentkezéshez és az adatok lekéréséhez szüksége van a lokálisan futó API-ra.
 
 ```bash
 docker compose up -d
@@ -344,6 +406,78 @@ Ezután egy másik terminálban:
 pnpm mobile
 ```
 
+Ez az Expo fejlesztői szervert indítja el. Innen többféleképpen lehet továbblépni:
+
+- Android emulátor: `a`
+- mobil web: `w`
+- Expo Go fizikai eszközön: QR kód beolvasása
+
+### Mobil futtatási módok
+
+#### 1. Android emulátor
+
+Az alapértelmezett beállítás ehhez van optimalizálva.
+
+```bash
+pnpm mobile:android
+```
+
+PowerShell script használatával:
+
+```powershell
+.\indit_mobil.ps1 -Mod android
+```
+
+Az alap API URL ebben az esetben:
+
+```text
+http://10.0.2.2:4000
+```
+
+#### 2. iOS szimulátor
+
+```bash
+pnpm mobile:ios
+```
+
+PowerShell script használatával:
+
+```powershell
+.\indit_mobil.ps1 -Mod ios
+```
+
+Itt általában ez működik:
+
+```text
+http://localhost:4000
+```
+
+#### 3. Mobil web Expo alatt
+
+Ha böngészőben szeretnéd tesztelni a mobil klienst:
+
+```bash
+pnpm mobile
+```
+
+Majd az Expo terminálban nyomd meg:
+
+```text
+w
+```
+
+Mobil web esetén a backendnek futnia kell, és a kliens `http://localhost:4000` címen éri el az API-t.
+
+Közvetlen PowerShell script használatával:
+
+```powershell
+.\indit_mobil.ps1 -Mod web
+```
+
+#### 4. Fizikai telefon Expo Go-val
+
+Ebben az esetben hozz létre egy `mobile/.env` fájlt a `mobile/.env.example` alapján, és állítsd be a saját géped helyi IP-címét.
+
 Hasznos mobil parancsok:
 
 ```bash
@@ -355,7 +489,7 @@ pnpm mobile:typecheck
 
 ### Mobil API URL
 
-Alapértelmezett mobil API URL:
+Alapértelmezett mobil API URL Android emulátorhoz:
 
 ```text
 http://10.0.2.2:4000
@@ -364,6 +498,8 @@ http://10.0.2.2:4000
 Ez az Android emulátorhoz megfelelő.
 
 iOS szimulátor esetén általában a `http://localhost:4000` működik.
+
+Mobil web esetén szintén a `http://localhost:4000` a megfelelő.
 
 Fizikai eszköz esetén hozd létre a `mobile/.env` fájlt a `mobile/.env.example` alapján, és állítsd be ezt:
 
@@ -506,6 +642,13 @@ Szükség esetén ellenőrizheted az elérési utat is:
 where.exe pnpm
 ```
 
+Ha nem szeretnéd minden parancsnál kézzel megadni ezt az útvonalat, használd inkább a PowerShell indító scripteket:
+
+```powershell
+.\indit_web.ps1
+.\indit_mobil.ps1
+```
+
 ## Környezeti fájlok
 
 ### Backend
@@ -544,21 +687,38 @@ Ezután megnyitandó:
 
 - `http://localhost:5173`
 
+Ez a fő webes változat, és ez tartalmazza a legteljesebb adminisztrációs funkcionalitást.
+
 Ha a mobil klienst is szeretnék kipróbálni:
 
 ```bash
 pnpm mobile
 ```
 
+Majd az Expo felületén:
+
+- `a` Android emulátorhoz
+- `w` mobil web nézethez
+
+Windows alatt egyszerűbb alternatíva:
+
+```powershell
+.\indit_web.ps1
+.\indit_mobil.ps1 -Mod web
+```
+
 ## A projekt jelenlegi fókusza
 
 Ez egy versenyre szánt MVP, amely elsősorban az alábbiakra koncentrál:
 
+- erős backend alapok
+- tiszta adatmodell és Prisma kapcsolatok
+- szerepkör-alapú jogosultságkezelés
+- stabil API végpontok
 - megbízható lokális futtatás
-- tiszta szerepkör-alapú architektúra
 - admin, oktató, diák és szuperadmin folyamatok
 - demóra előkészített seed adatok
 - reszponzív webes felület
 - mobil bónusz kliens
 
-Szándékosan kompakt, és úgy lett kialakítva, hogy a verseny során könnyen továbbfejleszthető legyen.
+Szándékosan kompakt, és úgy lett kialakítva, hogy a verseny során könnyen továbbfejleszthető legyen. A fejlesztési prioritás egyértelműen a backend és a teljes üzleti logika stabil megvalósítása volt; a mobil kliens erre épülő kiegészítő demonstrációs réteg.
