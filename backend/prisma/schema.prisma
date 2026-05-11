@@ -14,6 +14,12 @@ enum RoleName {
   STUDENT
 }
 
+enum GradeType {
+  REGULAR
+  SEMESTER
+  YEAR_END
+}
+
 model Role {
   id        String   @id @default(cuid())
   name      RoleName @unique
@@ -22,65 +28,69 @@ model Role {
   updatedAt DateTime @updatedAt
 }
 
+model Class {
+  id          String              @id @default(cuid())
+  year        Int
+  name        String
+  students    User[]
+  assignments SubjectAssignment[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([year, name])
+}
+
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
+  id           String              @id @default(cuid())
+  email        String              @unique
   name         String
   passwordHash String
   roleId       String
-  role        Role         @relation(fields: [roleId], references: [id])
-  teaching    Course[]     @relation("CourseTeacher")
-  enrollments Enrollment[]
-  submissions Submission[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  role         Role                @relation(fields: [roleId], references: [id])
+  classId      String?
+  class        Class?              @relation(fields: [classId], references: [id])
+  teaching     SubjectAssignment[] @relation("TeacherAssignments")
+  grades       Grade[]             @relation("StudentGrades")
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 }
 
-model Course {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  teacherId   String
-  teacher     User         @relation("CourseTeacher", fields: [teacherId], references: [id])
-  enrollments Enrollment[]
-  assignments Assignment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+model Subject {
+  id           String              @id @default(cuid())
+  name         String
+  description  String?
+  bookRequired String?
+  assignments  SubjectAssignment[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 }
 
-model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  courseId  String
-  user      User     @relation(fields: [userId], references: [id])
-  course    Course   @relation(fields: [courseId], references: [id])
-  createdAt DateTime @default(now())
+model SubjectAssignment {
+  id           String   @id @default(cuid())
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+  classId      String
+  class        Class    @relation(fields: [classId], references: [id])
+  teacherId    String
+  teacher      User     @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  academicYear Int
+  grades       Grade[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@unique([userId, courseId])
+  @@unique([subjectId, classId, academicYear])
 }
 
-model Assignment {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  dueDate     DateTime?
-  courseId    String
-  course      Course       @relation(fields: [courseId], references: [id])
-  submissions Submission[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
-
-model Submission {
-  id           String     @id @default(cuid())
-  content      String
-  grade        Int?
-  assignmentId String
-  studentId    String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  student      User       @relation(fields: [studentId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@unique([assignmentId, studentId])
+model Grade {
+  id                  String            @id @default(cuid())
+  value               Int
+  type                GradeType         @default(REGULAR)
+  weight              Int               @default(1)
+  description         String?
+  studentId           String
+  student             User              @relation("StudentGrades", fields: [studentId], references: [id])
+  subjectAssignmentId String
+  subjectAssignment   SubjectAssignment @relation(fields: [subjectAssignmentId], references: [id])
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 }

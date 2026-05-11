@@ -1,82 +1,81 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Layout } from "./components/Layout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { LoginPage } from "./pages/LoginPage";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { ClassManagementPage } from "./pages/admin/ClassManagementPage";
+import { SubjectAssignmentsPage } from "./pages/admin/SubjectAssignmentsPage";
+import { SubjectManagementPage } from "./pages/admin/SubjectManagementPage";
+import { UserManagementPage } from "./pages/admin/UserManagementPage";
+import { MyGradesPage } from "./pages/student/MyGradesPage";
+import { MySubjectsPage } from "./pages/student/MySubjectsPage";
+import { StudentDashboard } from "./pages/student/StudentDashboard";
+import { AdminManagementPage } from "./pages/superadmin/AdminManagementPage";
+import { SuperAdminDashboard } from "./pages/superadmin/SuperAdminDashboard";
+import { GradeEntryPage } from "./pages/teacher/GradeEntryPage";
+import { TeacherDashboard } from "./pages/teacher/TeacherDashboard";
+import { TeacherSubjectsPage } from "./pages/teacher/TeacherSubjectsPage";
 
-type HealthResponse = {
-  status: string;
-  service: string;
-  timestamp: string;
-};
-
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-
-const entities = [
-  {
-    title: "Users",
-    text: "Students, teachers, and admins with role-based behavior."
-  },
-  {
-    title: "Courses",
-    text: "Course pages, teacher ownership, and student enrollment lists."
-  },
-  {
-    title: "Assignments",
-    text: "Tasks, deadlines, submissions, and grading workflows."
-  },
-  {
-    title: "Enrollments",
-    text: "The connection between students and the courses they attend."
+function RootRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  switch (user.role) {
+    case "STUDENT":    return <Navigate to="/student" replace />;
+    case "TEACHER":    return <Navigate to="/teacher" replace />;
+    case "ADMIN":      return <Navigate to="/admin" replace />;
+    case "SUPERADMIN": return <Navigate to="/superadmin" replace />;
   }
-];
+}
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`${apiUrl}/api/health`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Backend did not respond successfully");
-        }
-        return response.json() as Promise<HealthResponse>;
-      })
-      .then(setHealth)
-      .catch((caughtError: Error) => setError(caughtError.message));
-  }, []);
-
   return (
-    <main className="app-shell">
-      <section className="hero">
-        <p className="eyebrow">BME fullstack hackathon starter</p>
-        <h1>Education Portal</h1>
-        <p className="intro">
-          React, Express, PostgreSQL, and Prisma are wired together so your team can
-          spend the competition building features instead of plumbing.
-        </p>
-      </section>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-      <section className="status-panel" aria-live="polite">
-        <div>
-          <span className={health ? "status-dot online" : "status-dot"} />
-          <strong>API status</strong>
-        </div>
-        {health ? (
-          <p>
-            Connected to <code>{health.service}</code>
-          </p>
-        ) : (
-          <p>{error ?? "Checking backend connection..."}</p>
-        )}
-      </section>
+          {/* All authenticated routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route index element={<RootRedirect />} />
 
-      <section className="entity-grid">
-        {entities.map((entity) => (
-          <article className="entity-card" key={entity.title}>
-            <h2>{entity.title}</h2>
-            <p>{entity.text}</p>
-          </article>
-        ))}
-      </section>
-    </main>
+              {/* Student routes */}
+              <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
+                <Route path="student" element={<StudentDashboard />} />
+                <Route path="student/subjects" element={<MySubjectsPage />} />
+                <Route path="student/grades" element={<MyGradesPage />} />
+              </Route>
+
+              {/* Teacher routes */}
+              <Route element={<ProtectedRoute roles={["TEACHER"]} />}>
+                <Route path="teacher" element={<TeacherDashboard />} />
+                <Route path="teacher/subjects" element={<TeacherSubjectsPage />} />
+                <Route path="teacher/grades" element={<GradeEntryPage />} />
+              </Route>
+
+              {/* Admin routes */}
+              <Route element={<ProtectedRoute roles={["ADMIN", "SUPERADMIN"]} />}>
+                <Route path="admin" element={<AdminDashboard />} />
+                <Route path="admin/users" element={<UserManagementPage />} />
+                <Route path="admin/classes" element={<ClassManagementPage />} />
+                <Route path="admin/subjects" element={<SubjectManagementPage />} />
+                <Route path="admin/assignments" element={<SubjectAssignmentsPage />} />
+              </Route>
+
+              {/* SuperAdmin routes */}
+              <Route element={<ProtectedRoute roles={["SUPERADMIN"]} />}>
+                <Route path="superadmin" element={<SuperAdminDashboard />} />
+                <Route path="superadmin/admins" element={<AdminManagementPage />} />
+              </Route>
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
