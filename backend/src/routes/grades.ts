@@ -14,10 +14,27 @@ router.get("/", async (req, res, next) => {
 
     const effectiveStudentId = user.role === "STUDENT" ? user.id : studentId;
 
+    // Teacher can only query grades for their own assignments
+    let teacherAssignmentFilter: { subjectAssignmentId: { in: string[] } } | undefined;
+    if (user.role === "TEACHER") {
+      const myAssignments = await prisma.subjectAssignment.findMany({
+        where: { teacherId: user.id },
+        select: { id: true },
+      });
+      const myIds = myAssignments.map((a) => a.id);
+      const requestedId = subjectAssignmentId;
+      if (requestedId && !myIds.includes(requestedId)) {
+        res.status(403).json({ message: "Access denied" });
+        return;
+      }
+      teacherAssignmentFilter = { subjectAssignmentId: { in: myIds } };
+    }
+
     const grades = await prisma.grade.findMany({
       where: {
         ...(effectiveStudentId && { studentId: effectiveStudentId }),
         ...(subjectAssignmentId && { subjectAssignmentId }),
+        ...(teacherAssignmentFilter && !subjectAssignmentId && teacherAssignmentFilter),
       },
       include: {
         subjectAssignment: {
@@ -50,14 +67,25 @@ router.post("/", requireRole("TEACHER", "ADMIN", "SUPERADMIN"), async (req, res,
       return;
     }
 
-    if (req.user!.role === "TEACHER") {
-      const assignment = await prisma.subjectAssignment.findUnique({
-        where: { id: body.data.subjectAssignmentId },
-      });
-      if (!assignment || assignment.teacherId !== req.user!.id) {
-        res.status(403).json({ message: "You can only enter grades for your own subject assignments" });
-        return;
-      }
+    const assignment = await prisma.subjectAssignment.findUnique({
+      where: { id: body.data.subjectAssignmentId },
+    });
+    if (!assignment) {
+      res.status(404).json({ message: "Subject assignment not found" });
+      return;
+    }
+    if (req.user!.role === "TEACHER" && assignment.teacherId !== req.user!.id) {
+      res.status(403).json({ message: "You can only enter grades for your own subject assignments" });
+      return;
+    }
+
+    // Validate that the student belongs to the assignment's class
+    const student = await prisma.user.findUnique({
+      where: { id: body.data.studentId },
+    });
+    if (!student || student.classId !== assignment.classId) {
+      res.status(400).json({ message: "Student is not enrolled in the class for this subject assignment" });
+      return;
     }
 
     const grade = await prisma.grade.create({
@@ -75,6 +103,18 @@ router.post("/", requireRole("TEACHER", "ADMIN", "SUPERADMIN"), async (req, res,
 
 router.delete("/:id", requireRole("TEACHER", "ADMIN", "SUPERADMIN"), async (req, res, next) => {
   try {
+    const grade = await prisma.grade.findUnique({
+      where: { id: req.params.id },
+      include: { subjectAssignment: true },
+    });
+    if (!grade) {
+      res.status(404).json({ message: "Grade not found" });
+      return;
+    }
+    if (req.user!.role === "TEACHER" && grade.subjectAssignment.teacherId !== req.user!.id) {
+      res.status(403).json({ message: "You can only delete grades for your own subject assignments" });
+      return;
+    }
     await prisma.grade.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {

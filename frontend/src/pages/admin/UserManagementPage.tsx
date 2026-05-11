@@ -71,13 +71,16 @@ export function UserManagementPage() {
     }
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete user "${name}"?`)) return;
+  async function handleDelete(id: string, name: string, role: string) {
+    const warning = role === "TEACHER"
+      ? `Delete teacher "${name}"?\n\nThis will also delete all their subject assignments and grades.`
+      : `Delete user "${name}"?`;
+    if (!confirm(warning)) return;
     try {
       await api.delete(`/api/users/${id}`);
       setUsers((prev) => prev.filter((u) => u.id !== id));
-    } catch {
-      alert("Failed to delete user");
+    } catch (err: any) {
+      alert(err?.message ?? "Failed to delete user");
     }
   }
 
@@ -239,7 +242,7 @@ export function UserManagementPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      onClick={() => handleDelete(user.id, user.name)}
+                      onClick={() => handleDelete(user.id, user.name, user.role.name)}
                       className="text-red-500 hover:text-red-700 text-xs font-medium"
                     >
                       Delete

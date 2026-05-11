@@ -58,6 +58,11 @@ router.put("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) =>
 
 router.delete("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) => {
   try {
+    const count = await prisma.subjectAssignment.count({ where: { subjectId: req.params.id } });
+    if (count > 0) {
+      res.status(400).json({ message: `Cannot delete subject — it is assigned to ${count} class(es). Remove assignments first.` });
+      return;
+    }
     await prisma.subject.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {

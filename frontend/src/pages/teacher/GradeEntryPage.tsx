@@ -82,7 +82,7 @@ export function GradeEntryPage() {
   }, [assignmentId, assignments]);
 
   const selected = assignments.find((a) => a.id === assignmentId) ?? null;
-  const classAvg = weightedAverage(grades);
+  const classAvg = weightedAverage(grades.filter((g) => g.type === "REGULAR"));
 
   async function handleAddGrade(studentId: string, e: React.FormEvent) {
     e.preventDefault();
@@ -152,7 +152,7 @@ export function GradeEntryPage() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-400">Class average</p>
+              <p className="text-xs text-gray-400">Class avg (regular)</p>
               <p className="text-2xl font-bold text-blue-600">{classAvg}</p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export function GradeEntryPage() {
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               {students.map((student, i) => {
                 const studentGrades = grades.filter((g) => g.studentId === student.id);
-                const avg = weightedAverage(studentGrades);
+                const avg = weightedAverage(studentGrades.filter((g) => g.type === "REGULAR"));
                 const isOpen = expandedStudentId === student.id;
 
                 return (

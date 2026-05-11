@@ -15,10 +15,21 @@ router.get("/", async (req, res, next) => {
     const user = req.user!;
     const effectiveTeacherId = user.role === "TEACHER" ? user.id : teacherId;
 
+    // Students can only see assignments for their own class
+    let effectiveClassId = classId;
+    if (user.role === "STUDENT") {
+      const student = await prisma.user.findUnique({ where: { id: user.id } });
+      if (!student?.classId) {
+        res.json([]);
+        return;
+      }
+      effectiveClassId = student.classId;
+    }
+
     const assignments = await prisma.subjectAssignment.findMany({
       where: {
         ...(subjectId && { subjectId }),
-        ...(classId && { classId }),
+        ...(effectiveClassId && { classId: effectiveClassId }),
         ...(effectiveTeacherId && { teacherId: effectiveTeacherId }),
         ...(academicYear && { academicYear: parseInt(academicYear) }),
       },
@@ -93,6 +104,11 @@ router.put("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) =>
 
 router.delete("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) => {
   try {
+    const count = await prisma.grade.count({ where: { subjectAssignmentId: req.params.id } });
+    if (count > 0) {
+      res.status(400).json({ message: `Cannot delete assignment — it has ${count} grade(s). Delete grades first.` });
+      return;
+    }
     await prisma.subjectAssignment.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {

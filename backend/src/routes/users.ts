@@ -79,6 +79,13 @@ router.put("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) =>
       res.status(400).json({ message: "Invalid request" });
       return;
     }
+    if (req.user!.role === "ADMIN") {
+      const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
+      if (target && (target.role.name === "ADMIN" || target.role.name === "SUPERADMIN")) {
+        res.status(403).json({ message: "Admins cannot edit admin-level users" });
+        return;
+      }
+    }
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: body.data,
@@ -93,6 +100,13 @@ router.put("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) =>
 
 router.delete("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) => {
   try {
+    if (req.user!.role === "ADMIN") {
+      const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
+      if (target && (target.role.name === "ADMIN" || target.role.name === "SUPERADMIN")) {
+        res.status(403).json({ message: "Admins cannot delete admin-level users" });
+        return;
+      }
+    }
     await prisma.user.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {

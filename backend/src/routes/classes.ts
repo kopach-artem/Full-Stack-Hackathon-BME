@@ -9,6 +9,20 @@ router.use(authenticate);
 
 router.get("/", async (req, res, next) => {
   try {
+    const user = req.user!;
+
+    // Students only see their own class
+    if (user.role === "STUDENT") {
+      const student = await prisma.user.findUnique({ where: { id: user.id } });
+      if (!student?.classId) { res.json([]); return; }
+      const cls = await prisma.class.findUnique({
+        where: { id: student.classId },
+        include: { _count: { select: { students: true, assignments: true } } },
+      });
+      res.json(cls ? [cls] : []);
+      return;
+    }
+
     const classes = await prisma.class.findMany({
       include: {
         students: { include: { role: true } },
@@ -24,6 +38,14 @@ router.get("/", async (req, res, next) => {
 
 router.get("/:id", async (req, res, next) => {
   try {
+    const user = req.user!;
+    if (user.role === "STUDENT") {
+      const student = await prisma.user.findUnique({ where: { id: user.id } });
+      if (student?.classId !== req.params.id) {
+        res.status(403).json({ message: "Access denied" });
+        return;
+      }
+    }
     const cls = await prisma.class.findUnique({
       where: { id: req.params.id },
       include: {
