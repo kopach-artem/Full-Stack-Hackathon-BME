@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth.js";
@@ -58,6 +59,10 @@ router.post("/", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) => {
     const { passwordHash: _, ...safeUser } = user;
     res.status(201).json(safeUser);
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      res.status(400).json({ message: "A user with this email already exists" });
+      return;
+    }
     next(error);
   }
 });

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth.js";
@@ -9,13 +10,14 @@ router.use(authenticate);
 
 router.get("/", async (req, res, next) => {
   try {
-    const { classId, teacherId, academicYear } = req.query as Record<string, string>;
+    const { classId, teacherId, academicYear, subjectId } = req.query as Record<string, string>;
 
     const user = req.user!;
     const effectiveTeacherId = user.role === "TEACHER" ? user.id : teacherId;
 
     const assignments = await prisma.subjectAssignment.findMany({
       where: {
+        ...(subjectId && { subjectId }),
         ...(classId && { classId }),
         ...(effectiveTeacherId && { teacherId: effectiveTeacherId }),
         ...(academicYear && { academicYear: parseInt(academicYear) }),
@@ -54,6 +56,37 @@ router.post("/", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) => {
     });
     res.status(201).json(assignment);
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      res.status(400).json({ message: "This subject is already assigned to this class for that academic year" });
+      return;
+    }
+    next(error);
+  }
+});
+
+const updateSchema = z.object({
+  teacherId: z.string().optional(),
+  academicYear: z.number().int().min(2000).max(2100).optional(),
+});
+
+router.put("/:id", requireRole("ADMIN", "SUPERADMIN"), async (req, res, next) => {
+  try {
+    const body = updateSchema.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ message: "Invalid request" });
+      return;
+    }
+    const assignment = await prisma.subjectAssignment.update({
+      where: { id: req.params.id },
+      data: body.data,
+      include: { subject: true, class: true, teacher: { select: { id: true, name: true, email: true } } },
+    });
+    res.json(assignment);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      res.status(400).json({ message: "This subject is already assigned to this class for that academic year" });
+      return;
+    }
     next(error);
   }
 });
