@@ -1,6 +1,10 @@
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+[Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
 function Write-Step {
   param([string]$Message)
 
@@ -116,10 +120,10 @@ function Ensure-DatabaseReady {
   param([string]$Pnpm)
 
   Write-Step "Prisma migráció futtatása"
-  Invoke-Pnpm $Pnpm @("db:migrate")
+  Invoke-Pnpm $Pnpm @("--dir", "backend", "db:migrate")
 
   Write-Step "Seed adatok betöltése"
-  Invoke-Pnpm $Pnpm @("db:seed")
+  Invoke-Pnpm $Pnpm @("--dir", "backend", "db:seed")
 }
 
 function Test-BackendHealth {
@@ -182,11 +186,11 @@ function Wait-ForUrl {
 }
 
 function Get-ChromeExecutable {
-  $candidates = @(
+  $candidates = @(@(
     "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
     "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
     "$env:LocalAppData\Google\Chrome\Application\chrome.exe"
-  ) | Where-Object { $_ -and (Test-Path $_) }
+  ) | Where-Object { $_ -and (Test-Path $_) })
 
   if ($candidates.Count -gt 0) {
     return $candidates[0]
